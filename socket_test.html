@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+    </style>
+</head>
+
+<body>
+    <canvas class="fill" id="canvas" ;></canvas>
+
+
+    <script>
+        let mouse = {
+            x: 0,
+            y: 0
+
+        }
+        let mousedown = 0
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = event.pageX;
+            mouse.y = event.pageY;
+
+        })
+        window.addEventListener("mousedown", function () {
+            mousedown = 1
+            move()
+        });
+        window.addEventListener("mouseup", function () {
+            mousedown = 0
+            move()
+        });
+        var canvas = document.getElementById("canvas");
+        var c = canvas.getContext("2d");
+        window.addEventListener("resize", resizeCanvas);
+        function resizeCanvas() {                   //螢幕顯示100%
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        function lerp(start, end, amt) { //
+            return (1 - amt) * start + amt * end //smooth移動
+        }
+
+
+
+
+
+
+
+        //player
+        class player {
+            constructor(playerId, playerName, playerLevel, playerClass) {
+                this.playerId = playerId
+                this.playerName = playerName
+                this.playerLevel = playerLevel
+                this.playerClass = playerClass
+                this.mouse = {
+                    x: 0,
+                    y: 0
+
+                }
+                this.position = {
+                    x: 0,
+                    y: 0
+
+                }
+                this.rotation = {
+                    x: 0,
+                    y: 0
+
+                }
+            }
+        }
+        const thisPlayer = new player(Math.floor(Math.random() * 1000), "test", 1, "knight")
+
+        function move() {
+            const message = {
+                type: "Move",
+                mousedown,
+                mouse
+
+            }
+            SocketSend(Serialization(message));
+        }
+
+
+
+
+
+
+        function Serialization(obj) {
+            const jsonString = JSON.stringify(obj);
+            return jsonString
+        }
+        function Deserialization(jsonString) {
+            const obj = JSON.parse(jsonString);
+            return obj
+        }
+        function AddThisPlayer(player) {
+            const message = {
+                type: "AddPlayer",
+                player
+            };
+            return message
+        }
+        const socket = new WebSocket('ws://localhost:8080');
+        socket.onopen = function (event) {
+            console.log('WebSocket connected!');
+            socket.send(Serialization(AddThisPlayer(thisPlayer)));
+        };
+        socket.onmessage = function (event) {
+            const message = event.data;
+            console.log('Received message from server:', message);
+        };
+        socket.onclose = function (event) {
+            console.log('WebSocket disconnected!');
+        };
+        socket.onerror = function (error) {
+            console.error('WebSocket error:', error);
+        };
+
+        function SocketSend(json) {
+            socket.send(json);
+        }
+
+
+
+        function animate() {
+            requestAnimationFrame(animate)
+            c.fillStyle = "rgba(35, 36, 42, 0.8)";
+            c.fillRect(0, 0, canvas.width, canvas.height)
+            //player1.update()
+        }
+        resizeCanvas()
+        animate()
+    </script>
+
+</body>
+
+</html>
