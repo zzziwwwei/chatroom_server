@@ -44,27 +44,26 @@
         const players = new Map();
         //player
         class Player {
-            constructor(playerId, playerName, playerLevel, playerClass) {
+            constructor(player) {
+                this.playerId = player.playerId
+                this.playerName = player.playerName
+                this.playerLevel = player.playerLevel
+                this.playerClass = player.playerClass
+                this.mouse = player.mouse
+                this.position  = player.position
+                this.rotation = player.rotation
+                this.moving = player.moving
+            }
+        }
+        class ThisPlayer {
+            constructor(playerId,playerName,playerLevel,playerClass) {
                 this.playerId = playerId
                 this.playerName = playerName
                 this.playerLevel = playerLevel
                 this.playerClass = playerClass
-                this.mouse = {
-                    x: 0,
-                    y: 0
-                }
-                this.position  = {
-                    x: 0,
-                    y:0
-                }
-                this.rotation = {
-                    x: 0,
-                    y: 0
-                }
-                this.moving = false
             }
         }
-        const thisPlayer = new Player(Math.floor(Math.random() * 1000), "test", 1, "knight")
+        const thisPlayer = new ThisPlayer(Math.floor(Math.random() * 1000), "test", 1, "knight")
 
         function move() {
             const message = {
@@ -92,7 +91,7 @@
         //創建玩家
         function CreatPlayer(playersInfo) {
             playersInfo.forEach(player => {
-                players.set(player.playerId,player)
+                players.set(player.playerId,new Player(player))
                 console.log(players.get(player.playerId))
             });
            
