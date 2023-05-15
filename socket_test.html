@@ -60,15 +60,13 @@
                 c.fill()
                 c.closePath()
             }
-            Move(){
-                this.position.x = Lerp(this.position.x,this.toPosition.x,0.05)
-                this.position.y = Lerp(this.position.y,this.toPosition.y,0.05)
+            Move() {
+                this.position.x = Math.floor(Lerp(this.position.x, this.toPosition.x, 0.05))
+                this.position.y = Math.floor(Lerp(this.position.y, this.toPosition.y, 0.05))
             }
             Update() {
                 this.Draw()
-                if(this.moving = 1){
-                    this.Move()
-                }
+                this.Move()
             }
         }
         class ThisPlayer {
@@ -108,16 +106,23 @@
         function CreatPlayer(playersInfo) {
             playersInfo.forEach(player => {
                 players.set(player.playerId, new Player(player))
-                console.log(players.get(player.playerId))
             });
 
         }
         function AddPlayer(player) {
             players.set(player.playerId, new Player(player))
-            console.log(Serialization(players))
         }
         //創建玩家
 
+        //刪除玩家
+        function DeletePlayer(id) {
+            for (const [playerId, player] of players) {
+                if (playerId === id) {
+                    players.delete(playerId);
+                    console.log('user disconnected:', playerId);
+                }
+            }
+        }
 
         function DecodeState(message) {
             if (message.type == "CreatPlayer") {
@@ -130,9 +135,15 @@
                     AddPlayer(message.players)
                 }
             }
+            if (message.type == "DeletePlayer") {
+                if (message.player !== []) {
+                    DeletePlayer(message.player)
+                }
+            }
             if (message.type == "SendList") {
                 message.sendList.forEach(i => { DecodeSendList(i) })
             }
+
         }
         function DecodeSendList(action) {
             if (action.type == "MoveToPoint") {
@@ -141,11 +152,10 @@
         }
 
         //玩家移動
-        function GraphicsMove(playerId, position,moving) {
+        function GraphicsMove(playerId, position, moving) {
             const obj = players.get(playerId)
             obj.toPosition = position
             obj.moving = moving
-            console.log(obj)
         }
 
 

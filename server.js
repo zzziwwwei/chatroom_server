@@ -39,8 +39,9 @@ class Player {
     }
     this.moving = false
   }
-  Move(){
-
+  Move() {
+    this.position.x = Math.floor(Lerp(this.position.x, this.toPosition.x, 0.05))
+    this.position.y = Math.floor(Lerp(this.position.y, this.toPosition.y, 0.05))
   }
   Update() {
     this.Move()
@@ -59,6 +60,7 @@ function DeleteUser(ws) {
   for (const [userId, userSocket] of users) {
     if (userSocket === ws) {
       DeletePlayer(userId);
+      CallDeletePlayer(userId)
       users.delete(userId);
       break;
     }
@@ -83,6 +85,13 @@ function DeletePlayer(userId) {
     }
   }
 }
+function CallDeletePlayer(playerId) {
+  const message = {
+    type:"DeletePlayer",
+    player:playerId
+  }
+  broadcast(message)
+}
 //刪除玩家
 
 
@@ -99,7 +108,7 @@ function BindPlayerAndUser(player, ws) {
   ws.send(Serialization(message))
   AddUser(player.playerId, ws)
   AddPlayer(player.playerId, player)
-   message = {
+  message = {
     type: "AddPlayer",
     players: players.get(player.playerId)
   }
@@ -125,15 +134,12 @@ function CallMove(isMove, toPosition, ws) {
   const obj = WsToPlayer(ws)
   obj.moving = isMove
   obj.toPosition = toPosition
-  const message ={
-    moving : isMove,
-    toPosition : toPosition
+  const message = {
+    moving: isMove,
+    toPosition: toPosition
   }
-  AddSendList("MoveToPoint",obj.playerId,message)
+  AddSendList("MoveToPoint", obj.playerId, message)
 }
-
-
-
 
 function Lerp(start, end, amt) { //
   return (1 - amt) * start + amt * end //smooth移動
@@ -151,11 +157,11 @@ function DecodeState(message, ws) {
 
 
 let sendList = []
-function AddSendList(type,playerId, send) {
-  const message ={
-    type:type,
-    playerId:playerId,
-    message:send
+function AddSendList(type, playerId, send) {
+  const message = {
+    type: type,
+    playerId: playerId,
+    message: send
   }
   sendList.push(message)
 }
@@ -172,8 +178,10 @@ wss.on('connection', (ws) => {
   });
   ws.on('close', () => {
     console.log('WebSocket連接已關閉')
-    DeletePlayer(ws)
+    //CallDeletePlayer(ws)
+    //DeletePlayer(ws)
     DeleteUser(ws)
+
     clients.delete(ws);
   });
 });
@@ -186,18 +194,21 @@ function broadcast(message) {
 }
 
 setInterval(() => {
-  const message={
-    type : "SendList",
+  const message = {
+    type: "SendList",
     sendList
   }
   broadcast(message)
   sendList = []
-}, 16*20);
+}, 16 * 20);
 setInterval(() => {
   players.forEach((value, key) => {
     value.Update()
   });
 }, 16);
+
+
+
 const port = 3001;
 app.listen(port, () => {
   console.log(port)
