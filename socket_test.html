@@ -20,15 +20,14 @@
         window.addEventListener('mousemove', (event) => {
             mouse.x = event.pageX;
             mouse.y = event.pageY;
-
         })
         window.addEventListener("mousedown", function () {
             mousedown = 1
-            move()
+            Move(mousedown, mouse)
         });
         window.addEventListener("mouseup", function () {
             mousedown = 0
-            move()
+            Move(mousedown, mouse)
         });
         var canvas = document.getElementById("canvas");
         var c = canvas.getContext("2d");
@@ -37,7 +36,7 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         }
-        function lerp(start, end, amt) { //
+        function Lerp(start, end, amt) { //
             return (1 - amt) * start + amt * end //smooth移動
         }
 
@@ -49,14 +48,31 @@
                 this.playerName = player.playerName
                 this.playerLevel = player.playerLevel
                 this.playerClass = player.playerClass
-                this.mouse = player.mouse
-                this.position  = player.position
+                this.toPosition = player.toPosition
+                this.position = player.position
                 this.rotation = player.rotation
                 this.moving = player.moving
             }
+            Draw() {
+                c.beginPath()
+                c.arc(this.position.x, this.position.y, 30, 0, Math.PI * 2)
+                c.fillStyle = "red"
+                c.fill()
+                c.closePath()
+            }
+            Move(){
+                this.position.x = Lerp(this.position.x,this.toPosition.x,0.05)
+                this.position.y = Lerp(this.position.y,this.toPosition.y,0.05)
+            }
+            Update() {
+                this.Draw()
+                if(this.moving = 1){
+                    this.Move()
+                }
+            }
         }
         class ThisPlayer {
-            constructor(playerId,playerName,playerLevel,playerClass) {
+            constructor(playerId, playerName, playerLevel, playerClass) {
                 this.playerId = playerId
                 this.playerName = playerName
                 this.playerLevel = playerLevel
@@ -65,11 +81,11 @@
         }
         const thisPlayer = new ThisPlayer(Math.floor(Math.random() * 1000), "test", 1, "knight")
 
-        function move() {
+        function Move(isMove, toPosition) {
             const message = {
                 type: "Move",
-                mousedown,
-                mouse
+                isMove,
+                toPosition
             }
             SocketSend(Serialization(message));
         }
@@ -91,33 +107,47 @@
         //創建玩家
         function CreatPlayer(playersInfo) {
             playersInfo.forEach(player => {
-                players.set(player.playerId,new Player(player))
+                players.set(player.playerId, new Player(player))
                 console.log(players.get(player.playerId))
             });
-           
+
         }
-        function AddPlayer(player){
-            players.set(player.playerId,player)
-            console.log(players)
+        function AddPlayer(player) {
+            players.set(player.playerId, new Player(player))
+            console.log(Serialization(players))
         }
         //創建玩家
 
 
         function DecodeState(message) {
             if (message.type == "CreatPlayer") {
-                if(message.players!==[]){
-                CreatPlayer(message.players)
+                if (message.players !== []) {
+                    CreatPlayer(message.players)
                 }
             }
             if (message.type == "AddPlayer") {
-                if(message.players!==[]){
-                AddPlayer(message.players)
+                if (message.players !== []) {
+                    AddPlayer(message.players)
                 }
             }
-            if (message.type == "Move") {
-
+            if (message.type == "SendList") {
+                message.sendList.forEach(i => { DecodeSendList(i) })
             }
         }
+        function DecodeSendList(action) {
+            if (action.type == "MoveToPoint") {
+                GraphicsMove(action.playerId, action.message.toPosition, action.message.moving)
+            }
+        }
+
+        //玩家移動
+        function GraphicsMove(playerId, position,moving) {
+            const obj = players.get(playerId)
+            obj.toPosition = position
+            obj.moving = moving
+            console.log(obj)
+        }
+
 
         const socket = new WebSocket('ws://localhost:8080');
         socket.onopen = function (event) {
@@ -140,14 +170,13 @@
         function SocketSend(json) {
             socket.send(json);
         }
-
-
-
         function animate() {
             requestAnimationFrame(animate)
             c.fillStyle = "rgba(35, 36, 42, 0.8)";
             c.fillRect(0, 0, canvas.width, canvas.height)
-            //player1.update()
+            players.forEach((value, key) => {
+                value.Update()
+            });
         }
         resizeCanvas()
         animate()

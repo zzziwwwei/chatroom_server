@@ -19,9 +19,6 @@ function Deserialization(jsonString) {
   const obj = JSON.parse(jsonString);
   return obj
 }
-function DecodeState(message) {
-}
-
 const users = new Map();
 const players = new Map();
 
@@ -31,29 +28,19 @@ class Player {
     this.playerName = playerName
     this.playerLevel = playerLevel
     this.playerClass = playerClass
-    this.mouse = {
-      x: 0,
-      y: 0
-    }
     this.position = {
       x: Math.floor(Math.random() * 1000),
       y: Math.floor(Math.random() * 1000)
     }
+    this.toPosition = this.position
     this.rotation = {
       x: 0,
       y: 0
     }
     this.moving = false
   }
-  Move() {
-    if (this.moving == true) {
-      this.position.x = lerp(this.position.x, this.mouse.x, 0.05)
-      this.position.y = lerp(this.position.y, this.mouse.y, 0.05)
-      const message = {
-        position: this.position
-      }
-      AddSendList(this.playerId, message)
-    }
+  Move(){
+
   }
   Update() {
     this.Move()
@@ -134,14 +121,21 @@ function WsToPlayer(ws) {
 
 
 //玩家移動
-function CallMove(ismove, mouse, ws) {
+function CallMove(isMove, toPosition, ws) {
   const obj = WsToPlayer(ws)
-  obj.moving = ismove
-  obj.mouse = mouse
-
+  obj.moving = isMove
+  obj.toPosition = toPosition
+  const message ={
+    moving : isMove,
+    toPosition : toPosition
+  }
+  AddSendList("MoveToPoint",obj.playerId,message)
 }
 
-function lerp(start, end, amt) { //
+
+
+
+function Lerp(start, end, amt) { //
   return (1 - amt) * start + amt * end //smooth移動
 }
 
@@ -151,14 +145,19 @@ function DecodeState(message, ws) {
     BindPlayerAndUser(message.player, ws)
   }
   if (message.type == "Move") {
-    CallMove(message.mousedown, message.mouse, ws)
+    CallMove(message.isMove, message.toPosition, ws)
   }
 }
 
 
 let sendList = []
-function AddSendList(playerId, send) {
-  sendList.push(playerId, send)
+function AddSendList(type,playerId, send) {
+  const message ={
+    type:type,
+    playerId:playerId,
+    message:send
+  }
+  sendList.push(message)
 }
 
 
@@ -182,15 +181,18 @@ wss.on('connection', (ws) => {
 // 廣播訊息給所有客戶端
 function broadcast(message) {
   users.forEach((value, key) => {
-    value.send( Serialization(message))
+    value.send(Serialization(message))
   });
 }
 
 setInterval(() => {
-  //broadcast(Serialization(sendList))
-  broadcast(Serialization(sendList))
+  const message={
+    type : "SendList",
+    sendList
+  }
+  broadcast(message)
   sendList = []
-}, 16 * 20);
+}, 16*20);
 setInterval(() => {
   players.forEach((value, key) => {
     value.Update()
