@@ -36,8 +36,8 @@ class Player {
       y: 0
     }
     this.position = {
-      x: 100,
-      y: 100
+      x: Math.floor(Math.random() * 1000),
+      y: Math.floor(Math.random() * 1000)
     }
     this.rotation = {
       x: 0,
@@ -46,10 +46,13 @@ class Player {
     this.moving = false
   }
   Move() {
-    if(this.moving == true){
-    this.position.x = lerp(this.position.x, this.mouse.x, 0.05)
-    this.position.y = lerp(this.position.y, this.mouse.y, 0.05)   
-    AddSendList(this.playerId, ('position',this.position))
+    if (this.moving == true) {
+      this.position.x = lerp(this.position.x, this.mouse.x, 0.05)
+      this.position.y = lerp(this.position.y, this.mouse.y, 0.05)
+      const message = {
+        position: this.position
+      }
+      AddSendList(this.playerId, message)
     }
   }
   Update() {
@@ -78,7 +81,7 @@ function DeleteUser(ws) {
 
 //創建玩家
 function AddPlayer(playerId, player) {
-  players.set(playerId,new Player(player.playerId,player.playerName,player.playerLevel,player.playerClass) );
+  players.set(playerId, new Player(player.playerId, player.playerName, player.playerLevel, player.playerClass));
 }
 //創建玩家
 
@@ -94,9 +97,26 @@ function DeletePlayer(userId) {
   }
 }
 //刪除玩家
+
+
+
 function BindPlayerAndUser(player, ws) {
+  const messagePlayers = []
+  players.forEach((value, key) => {
+    messagePlayers.push(value)
+  });
+  let message = {
+    type: "CreatPlayer",
+    players: messagePlayers
+  }
+  ws.send(Serialization(message))
   AddUser(player.playerId, ws)
-  AddPlayer(player.playerId,player)
+  AddPlayer(player.playerId, player)
+   message = {
+    type: "AddPlayer",
+    players: players.get(player.playerId)
+  }
+  broadcast(message)
   console.log(players)
 }
 
@@ -114,11 +134,11 @@ function WsToPlayer(ws) {
 
 
 //玩家移動
-function CallMove(ismove,mouse, ws) {
+function CallMove(ismove, mouse, ws) {
   const obj = WsToPlayer(ws)
   obj.moving = ismove
   obj.mouse = mouse
-  
+
 }
 
 function lerp(start, end, amt) { //
@@ -131,7 +151,7 @@ function DecodeState(message, ws) {
     BindPlayerAndUser(message.player, ws)
   }
   if (message.type == "Move") {
-    CallMove(message.mousedown,message.mouse, ws)
+    CallMove(message.mousedown, message.mouse, ws)
   }
 }
 
@@ -161,10 +181,8 @@ wss.on('connection', (ws) => {
 
 // 廣播訊息給所有客戶端
 function broadcast(message) {
-  clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
+  users.forEach((value, key) => {
+    value.send( Serialization(message))
   });
 }
 
@@ -175,7 +193,7 @@ setInterval(() => {
 }, 16 * 20);
 setInterval(() => {
   players.forEach((value, key) => {
-  value.Update()
+    value.Update()
   });
 }, 16);
 const port = 3001;

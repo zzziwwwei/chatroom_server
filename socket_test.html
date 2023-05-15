@@ -41,14 +41,9 @@
             return (1 - amt) * start + amt * end //smooth移動
         }
 
-
-
-
-
-
-
+        const players = new Map();
         //player
-        class player {
+        class Player {
             constructor(playerId, playerName, playerLevel, playerClass) {
                 this.playerId = playerId
                 this.playerName = playerName
@@ -57,37 +52,28 @@
                 this.mouse = {
                     x: 0,
                     y: 0
-
                 }
-                this.position = {
+                this.position  = {
                     x: 0,
-                    y: 0
-
+                    y:0
                 }
                 this.rotation = {
                     x: 0,
                     y: 0
-
                 }
+                this.moving = false
             }
         }
-        const thisPlayer = new player(Math.floor(Math.random() * 1000), "test", 1, "knight")
+        const thisPlayer = new Player(Math.floor(Math.random() * 1000), "test", 1, "knight")
 
         function move() {
             const message = {
                 type: "Move",
                 mousedown,
                 mouse
-
             }
             SocketSend(Serialization(message));
         }
-
-
-
-
-
-
         function Serialization(obj) {
             const jsonString = JSON.stringify(obj);
             return jsonString
@@ -103,14 +89,47 @@
             };
             return message
         }
+        //創建玩家
+        function CreatPlayer(playersInfo) {
+            playersInfo.forEach(player => {
+                players.set(player.playerId,player)
+                console.log(players.get(player.playerId))
+            });
+           
+        }
+        function AddPlayer(player){
+            players.set(player.playerId,player)
+            console.log(players)
+        }
+        //創建玩家
+
+
+        function DecodeState(message) {
+            if (message.type == "CreatPlayer") {
+                if(message.players!==[]){
+                CreatPlayer(message.players)
+                }
+            }
+            if (message.type == "AddPlayer") {
+                if(message.players!==[]){
+                AddPlayer(message.players)
+                }
+            }
+            if (message.type == "Move") {
+
+            }
+        }
+
         const socket = new WebSocket('ws://localhost:8080');
         socket.onopen = function (event) {
             console.log('WebSocket connected!');
             socket.send(Serialization(AddThisPlayer(thisPlayer)));
         };
         socket.onmessage = function (event) {
-            const message = event.data;
-            console.log('Received message from server:', message);
+            const messageJson = event.data;
+            const message = Deserialization(messageJson)
+            console.log('收到訊息:', message);
+            DecodeState(message)
         };
         socket.onclose = function (event) {
             console.log('WebSocket disconnected!');
