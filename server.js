@@ -38,12 +38,32 @@ class Player {
       y: 0
     }
     this.moving = false
+    this.bullets = []
   }
   Move() {
     this.position.x = Math.floor(Lerp(this.position.x, this.toPosition.x, 0.05))
     this.position.y = Math.floor(Lerp(this.position.y, this.toPosition.y, 0.05))
+    }
+  Update() {
+    this.Move()
+  }
+}
+
+class Bullet {
+  constructor(position, toPosition) {
+    this.position = position
+    this.toPosition = toPosition
+    this.exist = true
+  }
+  Move() {
+    this.position.x = Math.floor(Lerp(this.position.x, this.toPosition.x, 0.2))
+    this.position.y = Math.floor(Lerp(this.position.y, this.toPosition.y, 0.2))
+    if (Math.abs(this.position.x - this.toPosition.x) < 100 && Math.abs(this.position.y - this.toPosition.y) < 100) {
+        this.exist = false    
+    }
   }
   Update() {
+    console.log(this)
     this.Move()
   }
 }
@@ -87,8 +107,8 @@ function DeletePlayer(userId) {
 }
 function CallDeletePlayer(playerId) {
   const message = {
-    type:"DeletePlayer",
-    player:playerId
+    type: "DeletePlayer",
+    player: playerId
   }
   broadcast(message)
 }
@@ -138,8 +158,12 @@ function CallMove(isMove, toPosition, ws) {
     moving: isMove,
     toPosition: toPosition
   }
-  AddSendList("MoveToPoint", obj.playerId, message)
+  AddSendBuffer("MoveToPoint", obj.playerId, message)
 }
+
+
+
+
 
 function Lerp(start, end, amt) { //
   return (1 - amt) * start + amt * end //smooth移動
@@ -147,23 +171,28 @@ function Lerp(start, end, amt) { //
 
 //狀態解碼
 function DecodeState(message, ws) {
-  if (message.type == "AddPlayer") {
-    BindPlayerAndUser(message.player, ws)
+  switch (message.type) {
+    case "AddPlayer":
+      BindPlayerAndUser(message.player, ws)
+      break;
+    case "Move":
+      CallMove(message.isMove, message.toPosition, ws)
+      break;
+    default:
+      break;
   }
-  if (message.type == "Move") {
-    CallMove(message.isMove, message.toPosition, ws)
-  }
+
 }
 
 
-let sendList = []
-function AddSendList(type, playerId, send) {
+let sendBuffer = []
+function AddSendBuffer(type, playerId, send) {
   const message = {
     type: type,
     playerId: playerId,
     message: send
   }
-  sendList.push(message)
+  sendBuffer.push(message)
 }
 
 
@@ -195,16 +224,21 @@ function broadcast(message) {
 
 setInterval(() => {
   const message = {
-    type: "SendList",
-    sendList
+    type: "SendBuffer",
+    sendBuffer
   }
   broadcast(message)
-  sendList = []
-}, 16 * 20);
+  sendBuffer = []
+}, 16);
 setInterval(() => {
   players.forEach((value, key) => {
+
     value.Update()
+    value.bullets.forEach(i=>{
+      i.Update()
+    })
   });
+
 }, 16);
 
 
