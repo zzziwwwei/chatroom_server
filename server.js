@@ -1,6 +1,11 @@
 const express = require('express');
-const app = express();
-app.use(express.json());
+const server = express();
+server.use(express.json());
+server.set('views', './views');
+server.set('view engine', 'ejs')
+server.use('/static', express.static(__dirname + '/public'));
+const indexRouter = require('./routers/index');
+server.use('/',indexRouter)
 
 
 const WebSocket = require('ws');
@@ -244,7 +249,7 @@ setInterval(() => {
 
 
 const port = 3001;
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(port)
 })
 
