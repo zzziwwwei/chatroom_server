@@ -17,7 +17,7 @@
 > * 缺點封包較大，要傳完整的訊息，開發時長兩倍，同時要處理server端邏輯與client端邏輯。
 
 ## 實例(開4個實例展示，能中途加入與中斷連線)
-![image]()
+![image](https://github.com/zzziwwwei/chatroom_server/blob/main/%E5%AF%A6%E4%BE%8B.gif)
 
 ##server端程式碼
 ```js
