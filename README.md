@@ -21,7 +21,7 @@
 
 
 
-##Websocket只傳byte、json。定義封包規格，對系統詢問或是對遊戲指令
+# Websocket只傳byte、json。定義封包規格，對系統詢問或是對遊戲指令
 ```js
 function DecodeState(message) {
     switch (message.type) {
@@ -51,9 +51,10 @@ function DecodeState(message) {
     }
 
 }
-> * (!packet能在優化)。
 ```
-##server端廣播
+> * (!packet能在優化)。
+> * 
+# server端廣播
 ```js
     setInterval(() => {
   const message = {
@@ -67,7 +68,7 @@ function DecodeState(message) {
 > * server端接收訊號後會更新狀態。已更新的狀態會先存在緩衝區(sendBuffer)裡。
 > * 設定sendBuffer每16ms廣播給各client端。
 > * 
-##邏輯tick
+# 邏輯tick
 ```js
 class Player {
  Update() {
