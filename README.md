@@ -52,8 +52,8 @@ function DecodeState(message) {
 
 }
 ```
+> * 伺服端解包。
 > * (!packet能在優化)。
-> * 
 ## server端廣播
 ```js
     setInterval(() => {
