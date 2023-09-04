@@ -19,7 +19,41 @@
 ## 實例(開4個實例展示，能中途加入與中斷連線)
 ![image](https://github.com/zzziwwwei/chatroom_server/blob/main/%E5%AF%A6%E4%BE%8B.gif)
 
-##server端程式碼
+
+
+##Websocket只傳byte、json。定義封包規格，對系統詢問或是對遊戲指令
+```js
+function DecodeState(message) {
+    switch (message.type) {
+        case "CreatPlayer":
+            if (message.players !== []) {
+                CreatPlayer(message.players)
+                console.log("CreatPlayer")
+            }
+            break;
+        case "AddPlayer":
+            if (message.players !== []) {
+                AddPlayer(message.players)
+                console.log("AddPlayer")
+            }
+            break;
+        case "DeletePlayer":
+            if (message.players !== []) {
+                DeletePlayer(message.player)
+                console.log("DeletePlayerr")
+            }
+            break;
+        case "SendBuffer":
+            message.sendBuffer.forEach(i => { DecodeSendBuffer(i) })
+            break;
+        default:           
+            break;
+    }
+
+}
+> * (!packet能在優化)。
+```
+##server端廣播
 ```js
     setInterval(() => {
   const message = {
@@ -32,7 +66,8 @@
  ```
 > * server端接收訊號後會更新狀態。已更新的狀態會先存在緩衝區(sendBuffer)裡。
 > * 設定sendBuffer每16ms廣播給各client端。
-##
+> * 
+##邏輯tick
 ```js
 class Player {
  Update() {
