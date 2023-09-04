@@ -193,9 +193,9 @@ function DecodeState(message) {
         case "SendBuffer":
             message.sendBuffer.forEach(i => { DecodeSendBuffer(i) })
             break;
-        // 可以有更多的case语句
+        
         default:
-            // 当表达式的值不匹配任何case时执行的代码块
+           
             break;
     }
 
